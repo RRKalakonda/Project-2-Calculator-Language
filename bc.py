@@ -263,7 +263,11 @@ def parse_statement(tokens):
 def parse_program(tokens):
     statements = []
     while tokens:
-        statements.append(parse_statement(tokens))
+        try:
+            statements.append(parse_statement(tokens))
+        except Exception as e:
+            print("parse error")
+            sys.exit()
         # print(statements)
     return statements
 
@@ -298,8 +302,18 @@ def evaluate(node, variables=None):
         variables[node.left.token.value] = value
         return value
     elif node.token.token_type == TokenType.PRINT:
-        values = [evaluate(child, variables) for child in node.left]
-        print(*values)
+        values = []
+        try:
+            for child in node.left:
+                ans = evaluate(child, variables)
+                print(ans, end=" ")
+                values.append(ans)
+            # values = [evaluate(child, variables) for child in node.left]
+        except ZeroDivisionError as e:
+            # print(*values, end=" ")
+            print("divide by zero")
+            sys.exit()
+        
         return values[0] if values else None
 
 
@@ -320,7 +334,15 @@ def main(program):
     
     for node in statements:
         if node:
-            evaluate(node, variables)
+            try:
+                evaluate(node, variables)
+            except ZeroDivisionError as e:
+                # print(*values, end=" ")
+                print("divide by zero")
+                sys.exit()
+            except Exception as e:
+                print("parse error")
+                sys.exit()
 
 
 
