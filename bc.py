@@ -311,17 +311,17 @@ def evaluate(node, variables=None):
         return value
     elif node.token.token_type == TokenType.PRINT:
         values = []
-        try:
-            for child in node.left:
+        for child in node.left:
+            try:
                 ans = evaluate(child, variables)
                 print(ans, end=" ")
                 values.append(ans)
-            print()
-            # values = [evaluate(child, variables) for child in node.left]
-        except ZeroDivisionError as e:
-            # print(*values, end=" ")
-            print("divide by zero")
-            sys.exit()
+                # print()
+                # values = [evaluate(child, variables) for child in node.left]
+            except ZeroDivisionError as e:
+                # print(*values, end=" ")
+                print("divide by zero", end=" ")
+                # sys.exit()
         
         return values[0] if values else None
 
@@ -347,8 +347,8 @@ def main(program):
                 evaluate(node, variables)
             except ZeroDivisionError as e:
                 # print(*values, end=" ")
-                print("divide by zero")
-                sys.exit()
+                print("divide by zero", end=" ")
+                # sys.exit()
             # except Exception as e:
             #     print("parse error")
             #     sys.exit()
