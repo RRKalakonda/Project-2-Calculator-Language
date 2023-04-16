@@ -308,6 +308,7 @@ def evaluate(node, variables=None):
                 ans = evaluate(child, variables)
                 print(ans, end=" ")
                 values.append(ans)
+            print()
             # values = [evaluate(child, variables) for child in node.left]
         except ZeroDivisionError as e:
             # print(*values, end=" ")
