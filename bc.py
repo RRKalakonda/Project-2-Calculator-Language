@@ -286,7 +286,10 @@ def evaluate(node, variables=None):
     if node.token.token_type == TokenType.NUMBER:
         return float(node.token.value)
     elif node.token.token_type == TokenType.VARIABLE:
-        return variables[node.token.value]
+        if node.token.value in variables:
+            return variables[node.token.value]
+        else:
+            return float(0)
     elif node.token.token_type == TokenType.OPERATOR:
         left = evaluate(node.left, variables)
         right = evaluate(node.right, variables)
@@ -346,9 +349,9 @@ def main(program):
                 # print(*values, end=" ")
                 print("divide by zero")
                 sys.exit()
-            except Exception as e:
-                print("parse error")
-                sys.exit()
+            # except Exception as e:
+            #     print("parse error")
+            #     sys.exit()
 
 
 
