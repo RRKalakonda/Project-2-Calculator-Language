@@ -349,9 +349,9 @@ def main(program):
                 # print(*values, end=" ")
                 print("divide by zero")
                 sys.exit()
-            # except Exception as e:
-            #     print("parse error")
-            #     sys.exit()
+            except Exception as e:
+                print("parse error")
+                sys.exit()
 
 
 
