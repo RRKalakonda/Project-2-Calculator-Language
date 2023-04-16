@@ -224,6 +224,7 @@ def parse_program(tokens):
 
 
 def evaluate(node, variables=None):
+    return float(0)
     if variables is None:
         variables = {}
 
