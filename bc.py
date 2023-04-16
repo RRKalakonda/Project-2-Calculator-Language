@@ -275,10 +275,7 @@ def evaluate(node, variables=None):
     if node.token.token_type == TokenType.NUMBER:
         return float(node.token.value)
     elif node.token.token_type == TokenType.VARIABLE:
-        if node.token.value is variables:
-            return variables[node.token.value]
-        else:
-            return float(0)
+        return variables[node.token.value]
     elif node.token.token_type == TokenType.OPERATOR:
         left = evaluate(node.left, variables)
         right = evaluate(node.right, variables)
@@ -328,9 +325,23 @@ def main(program):
     # evaluate_program(statements)
 
 if __name__ == '__main__':
-    input_string = sys.argv[1]
+    # input_string = sys.argv[1]
+    
+    final_string = ''
+    while True:
+        input_string = input()
+        final_string = final_string + "\n" + input_string
+        if len(input_string) >6 and input_string[0:6] == "print ":
+            break
+
+    print(final_string)
+        
+
     test1 = """
-print -2^4
+a = 2
+b = 3
+c = (a + b) * (a - b) + x
+print c
 """
     program = """
 print 2^3^2
@@ -356,7 +367,7 @@ print -(3 ^ 2) + 4 * 3 - 5
 print 2 ^ 3 * -2 + 4, -2 ^ 3 + 1
 """
     # print(input_string)
-    main(input_string)
+    main(final_string)
 
 
 
