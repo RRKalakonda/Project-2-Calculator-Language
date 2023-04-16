@@ -44,6 +44,7 @@ def tokenize(input_str):
                 token_type = TokenType.PARENTHESIS
             elif input_str[i] == '=':
                 token_type = TokenType.ASSIGN
+
             if input_str[i] == '+' and  (i+1 < len(input_str) and input_str[i+1] == '+'):
                 if i>0 and tokens[-1].token_type == TokenType.VARIABLE:
                     tokens.append(Token(TokenType.OPERATOR, '_++'))
@@ -251,6 +252,7 @@ def evaluate(node, variables=None):
         elif node.token.value == '%':
             return left % right
         elif node.token.value in ('_++','_--','++_','--_'):
+            return float(0)
             var_name = node.right.token.value
             if node.token.value == '_++':
                 old_value = variables[var_name]
