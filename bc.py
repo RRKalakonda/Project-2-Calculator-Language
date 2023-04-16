@@ -353,8 +353,8 @@ print -(3 ^ 2) + 4 * 3 - 5
 print 2 ^ 3 * -2 + 4
 print -2 ^ 3 + 1
 """
-    print(input_string)
-    # main(program)
+    # print(input_string)
+    main(input_string)
 
 
 
