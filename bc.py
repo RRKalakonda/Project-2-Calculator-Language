@@ -316,12 +316,12 @@ def evaluate(node, variables=None):
                 ans = evaluate(child, variables)
                 print(ans, end=" ")
                 values.append(ans)
-                # print()
+                print()
                 # values = [evaluate(child, variables) for child in node.left]
             except ZeroDivisionError as e:
                 # print(*values, end=" ")
-                print("divide by zero", end=" ")
-                # sys.exit()
+                print("divide by zero")
+                sys.exit()
         
         return values[0] if values else None
 
@@ -347,8 +347,8 @@ def main(program):
                 evaluate(node, variables)
             except ZeroDivisionError as e:
                 # print(*values, end=" ")
-                print("divide by zero", end=" ")
-                # sys.exit()
+                print("divide by zero")
+                sys.exit()
             # except Exception as e:
             #     print("parse error")
             #     sys.exit()
