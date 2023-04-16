@@ -1,4 +1,5 @@
 import sys
+from collections import deque
 
 variables = {}
 
@@ -30,6 +31,7 @@ class Node:
         return f'Node({self.token}, {self.left}, {self.right})'
 
 
+
 def tokenize(input_str):
     tokens = []
     i = 0
@@ -43,23 +45,7 @@ def tokenize(input_str):
                 token_type = TokenType.PARENTHESIS
             elif input_str[i] == '=':
                 token_type = TokenType.ASSIGN
-
-            if input_str[i] == '+' and  (i+1 < len(input_str) and input_str[i+1] == '+'):
-                if i>0 and tokens[-1].token_type == TokenType.VARIABLE:
-                    tokens.append(Token(TokenType.OPERATOR, '_++'))
-                    i=i+2
-                elif i+2 < len(input_str) and input_str[i+2].isalpha():
-                    tokens.append(Token(TokenType.OPERATOR, '++_'))
-                    i=i+2
-            elif input_str[i] == '-' and (i+1 < len(input_str) and input_str[i+1] == '-'):
-                if i>0 and tokens[-1].token_type == TokenType.VARIABLE:
-                    tokens.append(Token(TokenType.OPERATOR, '_--'))
-                    i=i+2
-                elif i+2 < len(input_str) and input_str[i+2].isalpha():
-                    tokens.append(Token(TokenType.OPERATOR, '--_'))
-                    i=i+2
-                
-            elif input_str[i] == '-' and i + 1 < len(input_str) and input_str[i + 1].isdigit() and (
+            if input_str[i] == '-' and i + 1 < len(input_str) and input_str[i + 1].isdigit() and (
                     i == 0 or tokens[-1].token_type in (TokenType.OPERATOR, TokenType.PARENTHESIS, TokenType.COMMA, TokenType.NEWLINE, TokenType.ASSIGN, TokenType.PRINT)):
                 j = i + 1
                 while j < len(input_str) and (input_str[j].isdigit() or input_str[j] == '.'):
@@ -75,7 +61,7 @@ def tokenize(input_str):
                 j += 1
             tokens.append(Token(TokenType.NUMBER, float(input_str[i:j])))
             i = j
-        elif input_str[i].isalpha():
+        elif input_str[i].isalpha() or input_str[i] == '_':
             j = i + 1
             while j < len(input_str) and (input_str[j].isalnum() or input_str[j] == '_'):
                 j += 1
@@ -104,7 +90,6 @@ def parse_expression(tokens):
         '*': 2, '/': 2, '%': 2,
         '^': 3,
         'u-': 4,
-        '_++': 5, '_--': 5, '++_': 5, '--_': 5
     }
 
     left_associative = {'+', '-', '*', '/', '%'}
@@ -115,11 +100,10 @@ def parse_expression(tokens):
 
         if operator == 'u-':
             values.append(Node(Token(TokenType.OPERATOR, '-'), right=right))
-        elif operator in ( '_++', '_--', '++_', '--_'):
-            values.append(Node(Token(TokenType.OPERATOR, operator), right=right))
         else:
             left = values.pop()
             values.append(Node(Token(TokenType.OPERATOR, operator), left, right))
+
 
 
     def greater_precedence(op1, op2):
@@ -168,6 +152,8 @@ def parse_expression(tokens):
 
     return values[0]
 
+
+
 def parse_statement(tokens):
     if not tokens:
         return None
@@ -180,8 +166,6 @@ def parse_statement(tokens):
         tokens.pop(0)
         expressions = []
         while tokens and tokens[0].token_type != TokenType.NEWLINE:
-            # tokens.insert(0,Token(TokenType.PARENTHESIS, "("))
-            # tokens.append(Token(TokenType.PARENTHESIS, ")"))
             expressions.append(parse_expression(tokens))
             if tokens and tokens[0].token_type == TokenType.COMMA:
                 tokens.pop(0)
@@ -210,6 +194,8 @@ def parse_statement(tokens):
         return expression
 
 
+
+
 def parse_program(tokens):
     statements = []
     while tokens:
@@ -223,7 +209,6 @@ def parse_program(tokens):
 
 
 def evaluate(node, variables=None):
-    return float(0)
     if variables is None:
         variables = {}
 
@@ -251,24 +236,6 @@ def evaluate(node, variables=None):
             return left ** right
         elif node.token.value == '%':
             return left % right
-        elif node.token.value in ('_++','_--','++_','--_'):
-            return float(0)
-            var_name = node.right.token.value
-            if node.token.value == '_++':
-                old_value = variables[var_name]
-                variables[var_name] += 1
-                return old_value
-            elif node.token.value == '_--':
-                old_value = variables[var_name]
-                variables[var_name] -= 1
-                return old_value
-            elif node.token.value == '++_':
-                variables[var_name] += 1
-                return variables[var_name]
-            elif node.token.value == '--_':
-                variables[var_name] -= 1
-                return variables[var_name]
-
     elif node.token.token_type == TokenType.ASSIGN:
         value = evaluate(node.right, variables)
         variables[node.left.token.value] = value
@@ -291,16 +258,12 @@ def evaluate(node, variables=None):
 
 
 def main(program):
-    try:
-        tokens = tokenize(program)
-    except Exception:
-        print("parse error")
-        sys.exit()
+    tokens = tokenize(program)
     #print(tokens)
     statements = parse_program(tokens)
     # print(statements)
 
-
+    
     for node in statements:
         if node:
             try:
@@ -314,6 +277,8 @@ def main(program):
             #     sys.exit()
 
 
+
+
 if __name__ == '__main__':
     # input_string = sys.argv[1]
     
@@ -323,64 +288,3 @@ if __name__ == '__main__':
         main(input_string)
         
 
-    test1 = """
-a = 2
-b = 3
-c = (a + b) * (a - b) + x
-print c
-"""
-    program = """
-print 2^3^2
-print 5-1-1-1
-print 2^-3+1
-print (2 + 3) * (4 - 2) / (1 + 1) + 2 ^ 3
-print ((3 + 4) * 2 - 5) ^ 2
-print 2 ^ 3 * (1 + 1) + 4 / 2
-a = 2
-b = 3
-c = (a + b) * (a - b) + x
-print c
-x = 5
-y = 2 * x + 3
-z = y ^ 2 - 4 * y + 4
-print z
-base = 2
-exponent = 3
-result = base ^ exponent
-print result * (1 - base) + (base * 2)
-print -2 ^ 3
-print -(3 ^ 2) + 4 * 3 - 5
-print 2 ^ 3 * -2 + 4, -2 ^ 3 + 1
-"""
-    # print(input_string)
-    main(final_string)
-
-
-
-## print 2^-1 print -(3 ^ 2) + 4 * 3 - 5
-
-
-
-
-
-    # def greater_precedence(op1, op2):
-    #     return precedence[op1] > precedence[op2]
-
-    # def greater_precedence(op1, op2):
-    #     if op1 == op2 and op1 == '^':
-    #         return False
-    #     return precedence[op1] > precedence[op2]
-
-
-    # def greater_precedence(op1, op2):
-    #     if op1 in left_associative and op2 in left_associative:
-    #         return precedence[op1] >= precedence[op2]
-    #     return precedence[op1] > precedence[op2]
-
-
-    # def greater_precedence(op1, op2):
-    #     if op1 == op2 and op1 == '^':
-    #         return False
-    #     elif precedence[op1] == precedence[op2]:
-    #         return True
-    #     return precedence[op1] > precedence[op2]
