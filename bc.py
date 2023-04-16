@@ -163,11 +163,15 @@ def parse_expression(tokens):
 
 
 
-    def greater_precedence(op1, op2):
-        # if op1 == op2 and op1 == '^':
-        #     return False
-        return precedence[op1] > precedence[op2]
+    # def greater_precedence(op1, op2):
+    #     # if op1 == op2 and op1 == '^':
+    #     #     return False
+    #     return precedence[op1] > precedence[op2]
 
+    def greater_precedence(op1, op2):
+        if op1 in left_associative and op2 in left_associative:
+            return precedence[op1] >= precedence[op2]
+        return precedence[op1] > precedence[op2]
 
     operators = []
     values = []
@@ -349,8 +353,8 @@ print -(3 ^ 2) + 4 * 3 - 5
 print 2 ^ 3 * -2 + 4
 print -2 ^ 3 + 1
 """
-    # print(input_string)
-    main(input_string)
+    print(input_string)
+    # main(program)
 
 
 
