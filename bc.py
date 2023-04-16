@@ -258,7 +258,7 @@ def parse_program(tokens):
     statements = []
     while tokens:
         statements.append(parse_statement(tokens))
-        print(statements)
+        # print(statements)
     return statements
 
 
@@ -299,7 +299,7 @@ def main(program):
     tokens = tokenize(program)
     #print(tokens)
     statements = parse_program(tokens)
-    print(statements)
+    # print(statements)
 
     # ast_nodes = [
     #     None,
@@ -321,7 +321,7 @@ def main(program):
     # evaluate_program(statements)
 
 if __name__ == '__main__':
-    input = sys.argv()
+    input_string = sys.argv[1]
     test1 = """
 print -2^4
 """
@@ -349,8 +349,8 @@ print -(3 ^ 2) + 4 * 3 - 5
 print 2 ^ 3 * -2 + 4
 print -2 ^ 3 + 1
 """
-    print(input)
-    main(input[1])
+    # print(input_string)
+    main(input_string)
 
 
 
