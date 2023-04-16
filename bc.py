@@ -239,7 +239,12 @@ def parse_statement(tokens):
             tokens.pop(0)
         return Node(Token(TokenType.PRINT, "print"), left=expressions)
 
-
+    elif tokens[0].token_type == TokenType.VARIABLE and len(tokens) ==1:
+        variable = tokens.pop(0)
+        if tokens and tokens[0].token_type == TokenType.NEWLINE:
+            tokens.pop(0)
+        return Node(Token(TokenType.ASSIGN, '='), left=Node(variable), right=Node(Token(TokenType.NUMBER, float(0))))
+        
     elif tokens[0].token_type == TokenType.VARIABLE and tokens[1].token_type == TokenType.ASSIGN:
         variable = tokens.pop(0)
         tokens.pop(0)  # Remove the assignment operator
