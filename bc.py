@@ -103,7 +103,7 @@ def tokenize(input_str):
                 j += 1
             tokens.append(Token(TokenType.NUMBER, float(input_str[i:j])))
             i = j
-        elif input_str[i].isalpha() or input_str[i] == '_':
+        elif input_str[i].isalpha():
             j = i + 1
             while j < len(input_str) and (input_str[j].isalnum() or input_str[j] == '_'):
                 j += 1
@@ -327,7 +327,11 @@ def evaluate(node, variables=None):
 
 
 def main(program):
-    tokens = tokenize(program)
+    try:
+        tokens = tokenize(program)
+    except Exception:
+        print("parse error")
+        sys.exit()
     #print(tokens)
     statements = parse_program(tokens)
     # print(statements)
