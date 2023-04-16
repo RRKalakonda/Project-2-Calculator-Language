@@ -1,6 +1,8 @@
 import sys
 from collections import deque
 
+variables = {}
+
 class TokenType:
     NUMBER = 'NUMBER'
     VARIABLE = 'VARIABLE'
@@ -289,6 +291,8 @@ def evaluate(node, variables=None):
             return left / right
         elif node.token.value == '^':
             return left ** right
+        elif node.token.value == '%':
+            return left % right
     elif node.token.token_type == TokenType.ASSIGN:
         value = evaluate(node.right, variables)
         variables[node.left.token.value] = value
@@ -313,7 +317,7 @@ def main(program):
     #     Node(Token(TokenType.PRINT, 'print'), left=[Node(Token(TokenType.VARIABLE, 'area'), None, None)])
     # ]
 
-    variables = {}
+    
     for node in statements:
         if node:
             evaluate(node, variables)
@@ -330,11 +334,7 @@ if __name__ == '__main__':
     final_string = ''
     while True:
         input_string = input()
-        final_string = final_string + "\n" + input_string
-        if len(input_string) >6 and input_string[0:6] == "print ":
-            break
-
-    print(final_string)
+        main(input_string)
         
 
     test1 = """
