@@ -31,49 +31,6 @@ class Node:
         return f'Node({self.token}, {self.left}, {self.right})'
 
 
-
-
-# def tokenize(input_str):
-#     tokens = []
-#     i = 0
-#     while i < len(input_str):
-#         if input_str[i].isspace() and input_str[i] != '\n':
-#             i += 1
-#             continue
-#         elif input_str[i] in '+-*/%^()=':
-#             token_type = TokenType.OPERATOR
-#             if input_str[i] == '(' or input_str[i] == ')':
-#                 token_type = TokenType.PARENTHESIS
-#             elif input_str[i] == '=':
-#                 token_type = TokenType.ASSIGN
-#             tokens.append(Token(token_type, input_str[i]))
-#             i += 1
-#         elif input_str[i].isdigit() or input_str[i] == '.':
-#             j = i + 1
-#             while j < len(input_str) and (input_str[j].isdigit() or input_str[j] == '.'):
-#                 j += 1
-#             tokens.append(Token(TokenType.NUMBER, float(input_str[i:j])))
-#             i = j
-#         elif input_str[i].isalpha() or input_str[i] == '_':
-#             j = i + 1
-#             while j < len(input_str) and (input_str[j].isalnum() or input_str[j] == '_'):
-#                 j += 1
-#             value = input_str[i:j]
-#             if value == "print":
-#                 tokens.append(Token(TokenType.PRINT, value))
-#             else:
-#                 tokens.append(Token(TokenType.VARIABLE, value))
-#             i = j
-#         elif input_str[i] == ',':
-#             tokens.append(Token(TokenType.COMMA, ','))
-#             i += 1
-#         elif input_str[i] == '\n':
-#             tokens.append(Token(TokenType.NEWLINE, 'NONE'))
-#             i += 1
-#         else:
-#             raise ValueError(f"Invalid character: '{input_str[i]}'")
-#     return tokens
-
 def tokenize(input_str):
     tokens = []
     i = 0
@@ -87,7 +44,22 @@ def tokenize(input_str):
                 token_type = TokenType.PARENTHESIS
             elif input_str[i] == '=':
                 token_type = TokenType.ASSIGN
-            if input_str[i] == '-' and i + 1 < len(input_str) and input_str[i + 1].isdigit() and (
+            if input_str[i] == '+' and  (i+1 < len(input_str) and input_str[i+1] == '+'):
+                if i>0 and tokens[-1].token_type == TokenType.VARIABLE:
+                    tokens.append(Token(TokenType.OPERATOR, '_++'))
+                    i=i+2
+                elif i+2 < len(input_str) and input_str[i+2].isalpha():
+                    tokens.append(Token(TokenType.OPERATOR, '++_'))
+                    i=i+2
+            elif input_str[i] == '-' and (i+1 < len(input_str) and input_str[i+1] == '-'):
+                if i>0 and tokens[-1].token_type == TokenType.VARIABLE:
+                    tokens.append(Token(TokenType.OPERATOR, '_--'))
+                    i=i+2
+                elif i+2 < len(input_str) and input_str[i+2].isalpha():
+                    tokens.append(Token(TokenType.OPERATOR, '--_'))
+                    i=i+2
+                
+            elif input_str[i] == '-' and i + 1 < len(input_str) and input_str[i + 1].isdigit() and (
                     i == 0 or tokens[-1].token_type in (TokenType.OPERATOR, TokenType.PARENTHESIS, TokenType.COMMA, TokenType.NEWLINE, TokenType.ASSIGN, TokenType.PRINT)):
                 j = i + 1
                 while j < len(input_str) and (input_str[j].isdigit() or input_str[j] == '.'):
@@ -129,10 +101,10 @@ def tokenize(input_str):
 def parse_expression(tokens):
     precedence = {
         '+': 1, '-': 1,
-        '*': 2, '/': 2,
-        '%': 3,
-        '^': 4,
-        'u-': 5,
+        '*': 2, '/': 2, '%': 2,
+        '^': 3,
+        'u-': 4,
+        '_++': 5, '_--': 5, '++_': 5, '--_': 5
     }
 
     left_associative = {'+', '-', '*', '/', '%'}
@@ -141,35 +113,14 @@ def parse_expression(tokens):
         operator = operators.pop()
         right = values.pop()
 
-        if operator == 'u-':
+        if operator in ('u-'):
             values.append(Node(Token(TokenType.OPERATOR, '-'), right=right))
+        elif operator in ( '_++', '_--', '++_', '--_'):
+            values.append(Node(Token(TokenType.OPERATOR, operator), right=right))
         else:
             left = values.pop()
             values.append(Node(Token(TokenType.OPERATOR, operator), left, right))
 
-
-
-    # def apply_operator(operators, values):
-    #     operator = operators.pop()
-    #     right = values.pop()
-
-    #     if operator == 'u-':
-    #         values.append(Node(Token(TokenType.OPERATOR, '-'), right=right))
-    #     else:
-    #         left = values.pop()
-    #         while operators and operators[-1] == '^':
-    #             operator = operators.pop()
-    #             left = Node(Token(TokenType.OPERATOR, operator), left, right)
-    #             right = values.pop()
-    #         values.append(Node(Token(TokenType.OPERATOR, operator), left, right))
-
-
-
-
-    # def greater_precedence(op1, op2):
-    #     # if op1 == op2 and op1 == '^':
-    #     #     return False
-    #     return precedence[op1] > precedence[op2]
 
     def greater_precedence(op1, op2):
         if op1 in left_associative and op2 in left_associative:
@@ -217,8 +168,6 @@ def parse_expression(tokens):
 
     return values[0]
 
-
-
 def parse_statement(tokens):
     if not tokens:
         return None
@@ -261,11 +210,6 @@ def parse_statement(tokens):
         return expression
 
 
-
-
-
-
-
 def parse_program(tokens):
     statements = []
     while tokens:
@@ -306,6 +250,23 @@ def evaluate(node, variables=None):
             return left ** right
         elif node.token.value == '%':
             return left % right
+        elif node.token.value in ('_++','_--','++_','--_'):
+            var_name = node.right.token.value
+            if node.token.value == '_++':
+                old_value = variables[var_name]
+                variables[var_name] += 1
+                return old_value
+            elif node.token.value == '_--':
+                old_value = variables[var_name]
+                variables[var_name] -= 1
+                return old_value
+            elif node.token.value == '++_':
+                variables[var_name] += 1
+                return variables[var_name]
+            elif node.token.value == '--_':
+                variables[var_name] -= 1
+                return variables[var_name]
+
     elif node.token.token_type == TokenType.ASSIGN:
         value = evaluate(node.right, variables)
         variables[node.left.token.value] = value
@@ -337,15 +298,7 @@ def main(program):
     statements = parse_program(tokens)
     # print(statements)
 
-    # ast_nodes = [
-    #     None,
-    #     Node(Token(TokenType.ASSIGN, '='), Node(Token(TokenType.VARIABLE, 'pi'), None, None), Node(Token(TokenType.NUMBER, 3.14159), None, None)),
-    #     Node(Token(TokenType.ASSIGN, '='), Node(Token(TokenType.VARIABLE, 'r'), None, None), Node(Token(TokenType.NUMBER, 2.0), None, None)),
-    #     Node(Token(TokenType.ASSIGN, '='), Node(Token(TokenType.VARIABLE, 'area'), None, None), Node(Token(TokenType.OPERATOR, '*'), Node(Token(TokenType.VARIABLE, 'pi'), None, None), Node(Token(TokenType.OPERATOR, '^'), Node(Token(TokenType.VARIABLE, 'r'), None, None), Node(Token(TokenType.NUMBER, 2.0), None, None)))),
-    #     Node(Token(TokenType.PRINT, 'print'), left=[Node(Token(TokenType.VARIABLE, 'area'), None, None)])
-    # ]
 
-    
     for node in statements:
         if node:
             try:
@@ -358,11 +311,6 @@ def main(program):
             #     print("parse error")
             #     sys.exit()
 
-
-
-
-    # statements = parse_program(tokens)
-    # evaluate_program(statements)
 
 if __name__ == '__main__':
     # input_string = sys.argv[1]
