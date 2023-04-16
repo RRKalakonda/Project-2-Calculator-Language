@@ -113,7 +113,7 @@ def parse_expression(tokens):
         operator = operators.pop()
         right = values.pop()
 
-        if operator in ('u-'):
+        if operator == 'u-':
             values.append(Node(Token(TokenType.OPERATOR, '-'), right=right))
         elif operator in ( '_++', '_--', '++_', '--_'):
             values.append(Node(Token(TokenType.OPERATOR, operator), right=right))
