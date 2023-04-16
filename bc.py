@@ -129,9 +129,10 @@ def tokenize(input_str):
 def parse_expression(tokens):
     precedence = {
         '+': 1, '-': 1,
-        '*': 2, '/': 2, '%': 2,
-        '^': 3,
-        'u-': 4,
+        '*': 2, '/': 2,
+        '%': 3,
+        '^': 4,
+        'u-': 5,
     }
 
     left_associative = {'+', '-', '*', '/', '%'}
