@@ -38,12 +38,34 @@ def tokenize(input_str):
         if input_str[i].isspace() and input_str[i] != '\n':
             i += 1
             continue
-        elif input_str[i] in '+-*/%^()=':
+        elif input_str[i] in '+-*/%^()=<>!':
             token_type = TokenType.OPERATOR
             if input_str[i] == '(' or input_str[i] == ')':
                 token_type = TokenType.PARENTHESIS
             elif input_str[i] == '=':
                 token_type = TokenType.ASSIGN
+                if tokens and (tokens[-1].token_type == TokenType.OPERATOR or tokens[-1].token_type == TokenType.ASSIGN):
+                    op= tokens[-1].value
+                    if op in ['+', '-', '*', '/', '%', '^', '=', '<', '>', '!']:
+                        tokens.pop()
+                        tokens.append(Token(TokenType.OPERATOR, op+'='))
+                        i+=1
+                        continue
+
+
+            if input_str[i] == '&':
+                if (i+1 < len(input_str) and input_str[i+1] == '&'):
+                    tokens.append(Token(TokenType.OPERATOR, '&&'))
+                    i=i+2
+                else:
+                    raise Exception("parse error")
+    
+            if input_str[i] == '|':
+                if (i+1 < len(input_str) and input_str[i+1] == '|'):
+                    tokens.append(Token(TokenType.OPERATOR, '||'))
+                    i=i+2
+                else:
+                    raise Exception("parse error")
 
             if input_str[i] == '+' and  (i+1 < len(input_str) and input_str[i+1] == '+'):
                 if i>0 and tokens[-1].token_type == TokenType.VARIABLE:
@@ -105,10 +127,11 @@ def tokenize(input_str):
 
 def parse_expression(tokens):
     precedence = {
+        '+=': 0, '-=': 0, '*=': 0, '/=': 0, '%=': 0, '^=': 0, '==': 0, '<=': 0, '>=': 0, '!=': 0, '<': 0, '>': 0, '&&': 0, '||': 0,
         '+': 1, '-': 1,
         '*': 2, '/': 2, '%': 2,
         '^': 3,
-        'u-': 4,
+        'u-': 4, '!': 4,
         '_++': 5, '_--': 5, '++_': 5, '--_': 5
     }
 
@@ -122,6 +145,8 @@ def parse_expression(tokens):
             values.append(Node(Token(TokenType.OPERATOR, '-'), right=right))
         elif operator in { '_++', '_--', '++_', '--_'}:
             values.append(Node(Token(TokenType.OPERATOR, operator), right=right))
+        elif operator == '!':
+            values.append(Node(Token(TokenType.OPERATOR, '!'), right=right))
         else:
             left = values.pop()
             values.append(Node(Token(TokenType.OPERATOR, operator), left, right))
@@ -134,6 +159,7 @@ def parse_expression(tokens):
 
     operators = []
     values = []
+    p_u_flag = False
 
     # print(tokens)
 
@@ -147,7 +173,7 @@ def parse_expression(tokens):
         elif token.token_type == TokenType.OPERATOR:
             if token.value == '-':
                 if not values or (
-                        values[-1].token.token_type == TokenType.OPERATOR and values[-1].token.value != 'u-'):
+                        values[-1].token.token_type == TokenType.OPERATOR and values[-1].token.value != 'u-' and p_u_flag==False):
                     token = Token(TokenType.OPERATOR, 'u-')
 
             while (operators and operators[-1] != '(' and
@@ -162,6 +188,8 @@ def parse_expression(tokens):
                 while operators[-1] != '(':
                     apply_operator(operators, values)
                 operators.pop()
+                if tokens[0].token_type == TokenType.OPERATOR and tokens[0].value == '-':
+                    p_u_flag = True
         else:
             tokens.insert(0, token)
             break
@@ -242,7 +270,7 @@ def evaluate(node, variables=None):
         else:
             return float(0)
     elif node.token.token_type == TokenType.OPERATOR:
-        if node.token.value == '^':
+        if node.token.value in {'^', '+=', '-=', '*=', '/=', '%=', '^='}:
             right = evaluate(node.right, variables)
             left = evaluate(node.left, variables)
         else: 
@@ -278,6 +306,48 @@ def evaluate(node, variables=None):
             elif node.token.value == '--_':
                 variables[var_name] -= 1
                 return variables[var_name]
+        elif node.token.value in {'+=', '-=', '*=', '/=', '%=', '^='}:
+            var_name = node.left.token.value
+            if var_name not in variables:
+                variables[var_name] = float(0)
+            if '+' in node.token.value:
+                variables[var_name] = left + right
+                return left + right
+            elif '-' in node.token.value:
+                variables[var_name] = left - right
+                return left - right
+            elif '*' in node.token.value:
+                variables[var_name] = left * right
+                return left * right
+            elif '/' in node.token.value:
+                variables[var_name] = left / right
+                return left / right
+            elif '^' in node.token.value:
+                variables[var_name] = left ** right
+                return left ** right
+            elif '%' in node.token.value:
+                variables[var_name] = left % right
+                return left % right
+        elif node.token.value in {'==' , '<=' , '>=' , '!=' , '<' , '>'}:
+            if node.token.value == '==':
+                return 1 if left == right else 0
+            elif node.token.value == '<=':
+                return 1 if left <= right else 0
+            elif node.token.value == '>=' :
+                return 1 if left >= right else 0
+            elif node.token.value == '!=':
+                return 1 if left != right else 0
+            elif node.token.value == '<':
+                return 1 if left < right else 0
+            elif node.token.value == '>':
+                return 1 if left > right else 0
+        elif node.token.value in {'&&', '||', '!'}:
+            if node.token.value == '&&':
+                return 1 if abs(left) and abs(right) else 0
+            if node.token.value == '||':
+                return 1 if abs(left) or abs(right) else 0
+            if node.token.value == '!':
+                return 0 if abs(right) else 1
 
     elif node.token.token_type == TokenType.ASSIGN:
         value = evaluate(node.right, variables)
@@ -303,8 +373,40 @@ def evaluate(node, variables=None):
         
         return values[0] if values else None
 
+def comment_parser(program):
+    lines=program.split("\n")
+    res=""
+    commandFlag=False
+    for line in lines:
+        if(line.strip()==''):
+            continue
+        if(not commandFlag):
+            if('#' in line):
+                l=line.split('#',2)
+                if(l[0].strip()!=''):
+                    res+=(l[0]+"\n")
+            elif("/*" in line):
+                commandFlag=True
+                l=line.split('/*',2)
+                if(l[0].strip()!=''):
+                    res+=(l[0]+"\n")
+            else:
+                res+=(line+"\n")
+        else:
+            if("*/" in line):
+                commandFlag=False
+                l=line.split('*/',2)
+                if(l[1].strip()!=''):
+                    res+=(l[1]+"\n")
+    # print(res)
+    return res
+
+
 
 def main(program):
+
+    program = comment_parser(program)
+
     try:
         tokens = tokenize(program)
     except:
